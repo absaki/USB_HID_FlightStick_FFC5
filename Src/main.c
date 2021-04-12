@@ -103,12 +103,12 @@ int main(void)
   while (1)
   {
     HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
-    hid_sned_val[0] += 10; 
-    hid_sned_val[1] += 10;
-    hid_sned_val[3] += 10;
-    hid_sned_val[2] += 10;
+    hid_sned_val[0] += 20; 
+    hid_sned_val[1] += 20;
+    hid_sned_val[3] += 20;
+    hid_sned_val[2] += 20;
     My_USBD_HID_SendReport(hid_sned_val, 4);
-    HAL_Delay(20);
+    HAL_Delay(40);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
