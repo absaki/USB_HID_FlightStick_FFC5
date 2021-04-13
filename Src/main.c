@@ -96,19 +96,43 @@ int main(void)
   hid_sned_val[1] = 0;
   hid_sned_val[2] = 0;
   hid_sned_val[3] = 0;
+    typedef struct s_as5601{
+	  uint16_t	devaddr;
+	  uint16_t	memaddr;
+	  uint16_t	memsize;
+	  uint32_t	timeout_ms;
+  }t_as5601;
+  t_as5601	as5601;
+  as5601.devaddr = 0x36 << 1;
+  as5601.memaddr = 0x0c;
+  as5601.memsize = 1;
+  as5601.timeout_ms = 50;
+  uint16_t	raw_angle;
+  int tmp;
+  uint16_t readangle(I2C_HandleTypeDef *i2c, t_as5601 *as5601data)
+  {
+	  uint8_t	as5601_rxbuf[2] = {0, 0};
+	  HAL_I2C_Mem_Read(i2c, as5601data->devaddr, as5601data->memaddr, as5601data->memsize, as5601_rxbuf, 2, as5601data->timeout_ms);
+	  as5601_rxbuf[0] = (as5601_rxbuf[0] << 4);
+	  as5601_rxbuf[0] = (as5601_rxbuf[0] >> 4);
+	  return(uint16_t)(as5601_rxbuf[0] << 8) + as5601_rxbuf[1];
+  }
+  uint16_t init_angle = readangle(&hi2c1, &as5601);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
-    hid_sned_val[0] += 20; 
-    hid_sned_val[1] += 20;
-    hid_sned_val[3] += 20;
-    hid_sned_val[2] += 20;
+    raw_angle = readangle(&hi2c1, &as5601);
+	  tmp = raw_angle - init_angle;
+	  if(tmp > 127)
+		  tmp = 127;
+	  if(tmp < -128)
+		  tmp = -128;
+	  hid_sned_val[3] = tmp;
     My_USBD_HID_SendReport(hid_sned_val, 4);
-    HAL_Delay(40);
+    HAL_Delay(1);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
