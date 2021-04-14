@@ -107,8 +107,6 @@ int main(void)
   as5601.memaddr = 0x0c;
   as5601.memsize = 1;
   as5601.timeout_ms = 50;
-  uint16_t	raw_angle;
-  int tmp;
   uint16_t readangle(I2C_HandleTypeDef *i2c, t_as5601 *as5601data)
   {
 	  uint8_t	as5601_rxbuf[2] = {0, 0};
@@ -117,20 +115,30 @@ int main(void)
 	  as5601_rxbuf[0] = (as5601_rxbuf[0] >> 4);
 	  return(uint16_t)(as5601_rxbuf[0] << 8) + as5601_rxbuf[1];
   }
-  uint16_t init_angle = readangle(&hi2c1, &as5601);
+  uint16_t init_angle[3];
+  init_angle[1] = readangle(&hi2c1, &as5601);
+  init_angle[2] = readangle(&hi2c2, &as5601);
+  init_angle[3] = readangle(&hi2c3, &as5601);
+  readangle(&hi2c1, &as5601);
+  int8_t set_angle(I2C_HandleTypeDef *i2c, t_as5601 *as5601data, uint16_t def_angle)
+  {
+    uint16_t raw_angle = readangle(i2c, as5601data);
+	  int16_t  ret_angle = raw_angle - def_angle;
+	  if(ret_angle > 127)
+		  ret_angle = 127;
+	  if(ret_angle < -128)
+		  ret_angle = -128;
+    return ((int8_t)ret_angle);
+  }
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    raw_angle = readangle(&hi2c1, &as5601);
-	  tmp = raw_angle - init_angle;
-	  if(tmp > 127)
-		  tmp = 127;
-	  if(tmp < -128)
-		  tmp = -128;
-	  hid_sned_val[3] = tmp;
+    
+	  hid_sned_val[1] = set_angle(&hi2c1, &as5601, init_angle[1]);
+    hid_sned_val[2] = set_angle(&hi2c2, &as5601, init_angle[2]);
     My_USBD_HID_SendReport(hid_sned_val, 4);
     HAL_Delay(1);
     /* USER CODE END WHILE */
